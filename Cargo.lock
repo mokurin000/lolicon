@@ -330,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "lolicon"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "lolicon_api",
  "reqwest",
@@ -592,7 +592,6 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "serde",
- "serde_json",
  "serde_urlencoded",
  "tokio",
  "tokio-native-tls",
