@@ -49,7 +49,7 @@ jobs:
       - name: Run code build
         uses: actions-rs/cargo@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           command: build
           args: --release --target ${{ matrix.target }}
 
@@ -61,7 +61,7 @@ jobs:
           then strip ${{ matrix.bin }}
           fi
           
-          tar -cvf ${{ matrix.target }}.tar orig LICENSE.txt res ${{ matrix.bin }} img/speed_to_cpu-time.svg
+          tar -cvf ${{ matrix.target }}.tar LICENSE.txt ${{ matrix.bin }}
           
       - name: Declare some variables # https://stackoverflow.com/a/61699863
         id: vars
