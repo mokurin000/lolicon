@@ -1,9 +1,9 @@
 [package]
 authors = ["poly000"]
 name = "lolicon"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2018"
-license = "GPL-3.0"
+license = "MIT"
 description = "#NSFW warn; example usage for lolicon_api."
 repository = "https://github.com/poly000/lolicon"
 
