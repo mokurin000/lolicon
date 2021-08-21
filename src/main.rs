@@ -6,8 +6,7 @@ use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let req = Request::default()
-        .r18(R18::R18)
-        .size(vec!["original".into()])?;
+        .r18(R18::Mixin);
 
     let url = String::from(req);
 
