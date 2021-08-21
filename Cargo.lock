@@ -330,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "lolicon"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "lolicon_api",
  "reqwest",
@@ -339,9 +339,9 @@ dependencies = [
 
 [[package]]
 name = "lolicon_api"
-version = "0.2.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c98402b737558bfd276b24d4d988aabcc71265c9fe263f2dc778502fd2982ae"
+checksum = "7cb5fc801356de4c04a7304011e021e8dc63579ca14f814d58e6a5927403b462"
 dependencies = [
  "thiserror",
 ]
