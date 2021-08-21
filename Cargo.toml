@@ -5,6 +5,7 @@ version = "0.2.2"
 edition = "2018"
 license = "GPL-3.0"
 description = "#NSFW warn; example usage for lolicon_api."
+repository = "https://github.com/poly000/lolicon"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
