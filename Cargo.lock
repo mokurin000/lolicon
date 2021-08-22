@@ -330,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "lolicon"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "lolicon_api",
  "reqwest",
