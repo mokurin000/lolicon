@@ -18,9 +18,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let original = result.pointer("/data/0/urls/original");
     let pid = result.pointer("/data/0/pid");
+    let r18 = result.pointer("/data/0/r18");
 
     if let Some(Value::Number(pid)) = pid {
         eprintln!("pid: {}", pid);
+    }
+    if let Some(Value::Bool(r18)) = r18 {
+        eprintln!("r18: {}", r18);
     }
 
     if let Some(Value::String(ref image_url)) = original {
