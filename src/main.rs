@@ -29,8 +29,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .path_segments()
             .and_then(|path| path.last())
             .and_then(|name| if name.is_empty() { None } else { Some(name) })
-            .unwrap_or("temp.bin");
-        let mut file = std::fs::File::create(file_name)?;
+            .unwrap_or("temp.bin").to_string();
+        let mut file = std::fs::File::create(&file_name)?;
         file.write_all(image_req.bytes()?.as_ref())?;
 
         eprintln!("saved as {}.", file_name);
