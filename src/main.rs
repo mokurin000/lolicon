@@ -6,7 +6,8 @@ use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let req = Request::default()
-        .r18(R18::Mixin);
+        .r18(R18::Mixin)
+        .uid(&[16731])?;
 
     let url = String::from(req);
 
@@ -15,6 +16,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let result: Value = serde_json::from_str(&raw_result)?;
 
     let original = result.pointer("/data/0/urls/original");
+    let pid = result.pointer("/data/0/pid");
+
+    if let Value::Number(pid) = pid {
+        eprintln!("pid: {}", pid);
+    }
 
     if let Some(Value::String(ref image_url)) = original {
         let image_req = get(image_url)?;
@@ -25,6 +31,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap_or("temp.bin");
         let mut file = std::fs::File::create(file_name)?;
         file.write_all(image_req.bytes()?.as_ref())?;
+
+        eprintln!("saved as {}.", file_name);
     }
 
     Ok(())
