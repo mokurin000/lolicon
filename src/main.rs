@@ -7,6 +7,7 @@ use std::io::Write;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let req = Request::default()
         .r18(R18::Mixin)
+        // .tag(&["泳装".into()])?
         .uid(&[16731])?;
 
     let url = String::from(req);
@@ -18,7 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let original = result.pointer("/data/0/urls/original");
     let pid = result.pointer("/data/0/pid");
 
-    if let Value::Number(pid) = pid {
+    if let Some(Value::Number(pid)) = pid {
         eprintln!("pid: {}", pid);
     }
 
