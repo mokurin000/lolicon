@@ -7,6 +7,8 @@ use std::io::Write;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let req = Request::default()
         // .tag(&["泳装".into()])?
+        .r18(R18::Mixin)
+        .proxy("i.pixiv.re")
         .uid(&[16731])?;
 
     let url = String::from(req);
