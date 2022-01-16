@@ -8,8 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let req = Request::default()
         // .tag(&["泳装".into()])?
         .r18(R18::Mixin)
-        .proxy("i.pixiv.re")
-        .uid(&[16731])?;
+        .proxy("i.pixiv.re");
 
     let url = String::from(req);
 
@@ -25,16 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(Value::String(ref image_url)) = original {
-        let image_req = get(image_url)?;
-        let file_name = image_req.url()
-            .path_segments()
-            .and_then(|path| path.last())
-            .and_then(|name| if name.is_empty() { None } else { Some(name) })
-            .unwrap_or("temp.bin").to_string();
-        let mut file = std::fs::File::create(&file_name)?;
-        file.write_all(image_req.bytes()?.as_ref())?;
-
-        eprintln!("saved as {}.", file_name);
+        println!("{image_url}");
     }
 
     Ok(())
