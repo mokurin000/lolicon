@@ -1,6 +1,5 @@
 use lolicon_api::Request;
 use lolicon_api::R18;
-use reqwest::blocking::get;
 use serde_json::Value;
 use std::io::Write;
 
