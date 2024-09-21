@@ -1,13 +1,12 @@
 use lolicon_api::Request;
-use lolicon_api::R18;
+use lolicon_api::Category;
 use reqwest::blocking::get;
 use serde_json::Value;
-use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let req = Request::default()
         // .tag(&["泳装".into()])?
-        .r18(R18::Mixin)
+        .category(Category::Mixin)
         .proxy("i.pixiv.re");
 
     let url = String::from(req);
