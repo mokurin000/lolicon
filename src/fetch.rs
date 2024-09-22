@@ -14,9 +14,9 @@ use crate::Result;
 pub async fn download_image(
     result: Value,
     output_dir: impl AsRef<Path>,
-    size: impl AsRef<str>,
+    size: lolicon_api::ImageSize,
 ) -> Result<PathBuf> {
-    let size = size.as_ref();
+    let size = size.to_string();
     let original = result.pointer(&format!("/data/0/urls/{size}"));
     let pid = result.pointer("/data/0/pid");
 

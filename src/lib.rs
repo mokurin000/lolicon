@@ -7,3 +7,5 @@ pub mod fetch;
 pub use bytes;
 pub use serde_json;
 pub use url;
+
+pub use lolicon_api;

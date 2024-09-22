@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
     let raw_result = get(url).await?.text().await?;
     let result: Value = serde_json::from_str(&raw_result)?;
 
-    fetch::download_image(result, "images", "original").await?;
+    fetch::download_image(result, "images", ImageSize::Original).await?;
 
     Ok(())
 }

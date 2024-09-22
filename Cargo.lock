@@ -441,6 +441,7 @@ dependencies = [
  "bytes",
  "lolicon_api",
  "reqwest",
+ "serde",
  "serde_json",
  "tokio",
  "url",
@@ -448,11 +449,11 @@ dependencies = [
 
 [[package]]
 name = "lolicon_api"
-version = "1.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cc6d1a10663b4e879ac1718d2612fc326137365d6066cb77f304ec80959d2ca"
+version = "1.6.4"
+source = "git+https://github.com/mokurin000/lolicon_api.git#f7238ef4893fbb373b80c264959bc1e752ce2a35"
 dependencies = [
  "regex",
+ "serde",
  "strum",
  "thiserror",
 ]
