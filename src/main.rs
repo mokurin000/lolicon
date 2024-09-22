@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
     let req = config.request;
 
     let url = String::from(req);
-    println!("quering api: {url}");
+    eprintln!("quering api: {url}");
 
     let raw_result = get(url).await?.text().await?;
     let result: Setu = serde_json::from_str(&raw_result)?;

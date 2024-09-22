@@ -39,7 +39,7 @@ pub async fn download_image_data(
     let mut metadata_path = target_path.clone();
     metadata_path.set_extension(".json");
 
-    println!("writing metadata...");
+    eprintln!("writing metadata...");
     fs::write(&metadata_path, serde_json::to_string(&data)?).await?;
 
     if target_path.exists() {
@@ -47,18 +47,12 @@ pub async fn download_image_data(
         results.push(target_path);
         return Ok(());
     }
-    println!("downloading {image_url}...",);
+    eprintln!("downloading {image_url}...",);
 
-    match download_retry(&url, max_retry).await {
-        Ok(image) => {
-            println!("writing image...");
-            fs::write(&target_path, &image).await?;
-            results.push(target_path);
-        }
-        Err(reason) => {
-            println!("download failed. {reason}");
-        }
-    }
+    let image = download_retry(&url, max_retry).await?;
+    eprintln!("writing image...");
+    fs::write(&target_path, &image).await?;
+    results.push(target_path);
 
     Ok(())
 }
@@ -72,7 +66,11 @@ pub async fn download_images(
     let mut results = Vec::new();
 
     for data in &result.data {
-        download_image_data(data, output_dir.as_ref(), size, max_retry, &mut results).await?
+        if let Err(e) =
+            download_image_data(data, output_dir.as_ref(), size, max_retry, &mut results).await
+        {
+            eprintln!("download failed: {e}");
+        }
     }
 
     Ok(results)
@@ -93,7 +91,7 @@ pub async fn download_retry(url: &Url, max_retry: usize) -> Result<bytes::Bytes>
             break;
         }
 
-        println!("download failed, will retry after {wait_time_ms}ms...");
+        eprintln!("download failed, will retry after {wait_time_ms}ms...");
         tokio::time::sleep(Duration::from_millis(wait_time_ms)).await;
         wait_time_ms *= 2;
     }
