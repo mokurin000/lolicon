@@ -1,24 +1,29 @@
+use config::Config;
 use reqwest::get;
 
-use lolicon_api::strum::IntoEnumIterator;
-
-use lolicon_api::Category;
 use lolicon_api::ImageSize;
-use lolicon_api::Request;
 use lolicon_api::Setu;
 
 use lolicon::fetch;
 use lolicon::Result;
+use tokio::fs;
+
+mod config;
+
+const CONFIG_FILE: &str = "config.toml";
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let req = Request::default()
-        .num(1)?
-        .exclude_ai(true)
-        .category(Category::R18)
-        .aspect_ratio("lt1")?
-        .proxy("i.pixiv.cat")
-        .size(ImageSize::iter().collect::<Vec<_>>().as_ref())?;
+    let config;
+
+    if !fs::try_exists(CONFIG_FILE).await? {
+        config = Config::default();
+        fs::write(CONFIG_FILE, toml::to_string(&config)?).await?;
+    } else {
+        config = toml::from_str(&fs::read_to_string(CONFIG_FILE).await?)?;
+    }
+
+    let req = config.request;
 
     let url = String::from(req);
     println!("quering api: {url}");
@@ -26,7 +31,7 @@ async fn main() -> Result<()> {
     let raw_result = get(url).await?.text().await?;
     let result: Setu = serde_json::from_str(&raw_result)?;
 
-    fetch::download_image(result, "images", ImageSize::Original, 5).await?;
+    fetch::download_image(result, "images", ImageSize::Original, config.max_retry).await?;
 
     Ok(())
 }

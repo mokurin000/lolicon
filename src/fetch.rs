@@ -66,6 +66,7 @@ pub async fn download_image(
 pub async fn download_retry(url: &Url, max_retry: usize) -> Result<bytes::Bytes> {
     let mut image = Err("download failed. exceeding retry limit");
 
+    let mut wait_time_ms = 500;
     for _ in 0..max_retry {
         let result = get(url.as_str()).await;
         if let Ok(resp) = result {
@@ -77,7 +78,9 @@ pub async fn download_retry(url: &Url, max_retry: usize) -> Result<bytes::Bytes>
             break;
         }
 
-        tokio::time::sleep(Duration::from_millis(500)).await;
+        println!("download failed, will retry after {wait_time_ms}ms...");
+        tokio::time::sleep(Duration::from_millis(wait_time_ms)).await;
+        wait_time_ms *= 2;
     }
 
     Ok(image?)
