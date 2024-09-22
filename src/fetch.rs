@@ -11,8 +11,13 @@ use url::Url;
 
 use crate::Result;
 
-pub async fn download_image(result: Value, output_dir: impl AsRef<Path>) -> Result<PathBuf> {
-    let original = result.pointer("/data/0/urls/original");
+pub async fn download_image(
+    result: Value,
+    output_dir: impl AsRef<Path>,
+    size: impl AsRef<str>,
+) -> Result<PathBuf> {
+    let size = size.as_ref();
+    let original = result.pointer(&format!("/data/0/urls/{size}"));
     let pid = result.pointer("/data/0/pid");
 
     if let Some(Value::Number(pid)) = pid {
@@ -20,7 +25,7 @@ pub async fn download_image(result: Value, output_dir: impl AsRef<Path>) -> Resu
     }
 
     let Some(Value::String(ref image_url)) = original else {
-        Err("failed to parse image_url!")?
+        Err(format!("failed to parse image_url of size {size}!"))?
     };
 
     fs::create_dir_all(output_dir.as_ref()).await?;
