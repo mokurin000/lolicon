@@ -1,12 +1,17 @@
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
 
 use lolicon_api::{strum::IntoEnumIterator, Category, ImageSize, Request};
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Config {
     pub request: Request,
     pub max_retry: usize,
     pub save_metadata: bool,
+    pub target_size: ImageSize,
+    pub output_dir: PathBuf,
 }
 
 impl Default for Config {
@@ -24,6 +29,8 @@ impl Default for Config {
                 .unwrap(),
             max_retry: 5,
             save_metadata: true,
+            target_size: ImageSize::Original,
+            output_dir: PathBuf::from("images"),
         }
     }
 }

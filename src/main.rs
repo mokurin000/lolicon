@@ -1,7 +1,6 @@
 use config::Config;
 use reqwest::get;
 
-use lolicon_api::ImageSize;
 use lolicon_api::Setu;
 
 use lolicon::fetch;
@@ -38,8 +37,8 @@ async fn main() -> Result<()> {
 
     fetch::download_images(
         result,
-        "images",
-        ImageSize::Original,
+        config.output_dir,
+        config.target_size,
         config.max_retry,
         config.save_metadata,
     )
