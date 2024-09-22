@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use config::Config;
 use reqwest::get;
 
@@ -7,6 +9,7 @@ use lolicon_api::Setu;
 use lolicon::fetch;
 use lolicon::Result;
 use tokio::fs;
+use tokio::time;
 
 mod config;
 
@@ -30,6 +33,11 @@ async fn main() -> Result<()> {
 
     let raw_result = get(url).await?.text().await?;
     let result: Setu = serde_json::from_str(&raw_result)?;
+
+    if !result.error.is_empty() {
+        eprintln!("错误：{}", result.error);
+        std::process::exit(1);
+    }
 
     fetch::download_images(
         result,
