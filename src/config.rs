@@ -6,6 +6,7 @@ use lolicon_api::{strum::IntoEnumIterator, Category, ImageSize, Request};
 pub struct Config {
     pub request: Request,
     pub max_retry: usize,
+    pub save_metadata: bool,
 }
 
 impl Default for Config {
@@ -22,6 +23,7 @@ impl Default for Config {
                 .size(ImageSize::iter().collect::<Vec<_>>().as_ref())
                 .unwrap(),
             max_retry: 5,
+            save_metadata: true,
         }
     }
 }

@@ -17,6 +17,7 @@ pub async fn download_image_data(
     output_dir: &Path,
     size: lolicon_api::ImageSize,
     max_retry: usize,
+    save_metadata: bool,
 ) -> Result<PathBuf> {
     let pid = data.pid;
     eprintln!("pid: {pid}");
@@ -36,11 +37,13 @@ pub async fn download_image_data(
     let url = url::Url::from_str(&image_url)?;
     let basename = url.path_segments().unwrap().last().unwrap();
     let target_path = output_dir.join(basename);
-    let mut metadata_path = target_path.clone();
-    metadata_path.set_extension(".json");
 
-    eprintln!("writing metadata...");
-    fs::write(&metadata_path, serde_json::to_string(&data)?).await?;
+    if save_metadata {
+        let mut metadata_path = target_path.clone();
+        metadata_path.set_extension("json");
+        eprintln!("writing metadata...");
+        fs::write(&metadata_path, serde_json::to_string(&data)?).await?;
+    }
 
     if target_path.exists() {
         println!("skipping existing image.");
@@ -60,11 +63,12 @@ pub async fn download_images(
     output_dir: impl AsRef<Path>,
     size: lolicon_api::ImageSize,
     max_retry: usize,
+    save_metadata: bool,
 ) -> Result<Vec<PathBuf>> {
     let mut results = Vec::new();
 
     for data in &setu.data {
-        match download_image_data(data, output_dir.as_ref(), size, max_retry).await {
+        match download_image_data(data, output_dir.as_ref(), size, max_retry, save_metadata).await {
             Ok(path) => results.push(path),
             Err(e) => {
                 eprintln!("download failed: {e}");
