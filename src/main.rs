@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
     let raw_result = get(url).await?.text().await?;
     let result: Setu = serde_json::from_str(&raw_result)?;
 
-    fetch::download_image(result, "images", ImageSize::Original, config.max_retry).await?;
+    fetch::download_images(result, "images", ImageSize::Original, config.max_retry).await?;
 
     Ok(())
 }
