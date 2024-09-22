@@ -10,7 +10,7 @@ repository = "https://github.com/poly000/lolicon"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lolicon_api = "1.5.3"
+lolicon_api = "1.6.0"
 serde_json = "1.0.128"
 reqwest = { version = "0.12.7", features = ["blocking"] }
 url = "2.5.2"

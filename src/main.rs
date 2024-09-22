@@ -19,6 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .proxy("i.pixiv.cat");
 
     let url = String::from(req);
+    println!("quering api: {url}");
 
     let raw_result = get(url)?.text()?;
 
