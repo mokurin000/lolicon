@@ -6,7 +6,7 @@ use std::{
 
 use lolicon_api::{Setu, SetuData};
 use reqwest::get;
-use tokio::fs;
+use tokio::{fs, task::JoinSet};
 use url::Url;
 
 use crate::Result;
@@ -67,8 +67,21 @@ pub async fn download_images(
 ) -> Result<Vec<PathBuf>> {
     let mut results = Vec::new();
 
+    let mut tasks = JoinSet::new();
     for data in &setu.data {
-        match download_image_data(data, output_dir.as_ref(), size, max_retry, save_metadata).await {
+        let data = data.clone();
+        let output_dir = output_dir.as_ref().to_path_buf();
+        tasks.spawn(async move {
+            download_image_data(&data, output_dir.as_ref(), size, max_retry, save_metadata).await
+        });
+    }
+
+    while let Some(result) = tasks.join_next().await {
+        let Ok(result) = result else {
+            continue;
+        };
+
+        match result {
             Ok(path) => results.push(path),
             Err(e) => {
                 eprintln!("download failed: {e}");
