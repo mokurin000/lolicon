@@ -1,11 +1,11 @@
 use reqwest::get;
-use serde_json::Value;
 
 use lolicon_api::strum::IntoEnumIterator;
 
 use lolicon_api::Category;
 use lolicon_api::ImageSize;
 use lolicon_api::Request;
+use lolicon_api::Setu;
 
 use lolicon::fetch;
 use lolicon::Result;
@@ -24,9 +24,9 @@ async fn main() -> Result<()> {
     println!("quering api: {url}");
 
     let raw_result = get(url).await?.text().await?;
-    let result: Value = serde_json::from_str(&raw_result)?;
+    let result: Setu = serde_json::from_str(&raw_result)?;
 
-    fetch::download_image(result, "images", ImageSize::Original).await?;
+    fetch::download_image(result, "images", ImageSize::Original, 5).await?;
 
     Ok(())
 }

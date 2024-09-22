@@ -4,59 +4,69 @@ use std::{
     time::Duration,
 };
 
+use lolicon_api::Setu;
 use reqwest::get;
-use serde_json::Value;
 use tokio::fs;
 use url::Url;
 
 use crate::Result;
 
 pub async fn download_image(
-    result: Value,
+    result: Setu,
     output_dir: impl AsRef<Path>,
     size: lolicon_api::ImageSize,
-) -> Result<PathBuf> {
-    let size = size.to_string();
-    let original = result.pointer(&format!("/data/0/urls/{size}"));
-    let pid = result.pointer("/data/0/pid");
+    max_retry: usize,
+) -> Result<Vec<PathBuf>> {
+    let mut results = Vec::new();
 
-    if let Some(Value::Number(pid)) = pid {
-        eprintln!("pid: {}", pid);
+    for data in &result.data {
+        let pid = data.pid;
+        eprintln!("pid: {pid}");
+
+        let image_url = match size {
+            lolicon_api::ImageSize::Original => &data.urls.original,
+            lolicon_api::ImageSize::Regular => &data.urls.regular,
+            lolicon_api::ImageSize::Small => &data.urls.small,
+            lolicon_api::ImageSize::Thumb => &data.urls.thumb,
+            lolicon_api::ImageSize::Mini => &data.urls.mini,
+        }
+        .as_deref()
+        .ok_or(format!("missing size {size}!"))?;
+
+        fs::create_dir_all(output_dir.as_ref()).await?;
+
+        let url = url::Url::from_str(&image_url)?;
+        let basename = url.path_segments().unwrap().last().unwrap();
+        let target_path = Path::new(output_dir.as_ref()).join(basename);
+        let mut metadata_path = target_path.clone();
+        metadata_path.set_extension(".json");
+
+        println!("writing metadata...");
+        fs::write(&metadata_path, serde_json::to_string(&result)?).await?;
+
+        if target_path.exists() {
+            println!("skipping existing image.");
+            results.push(target_path);
+            continue;
+        }
+        println!("downloading {image_url}...",);
+
+        if let Ok(image) = download_retry(&url, max_retry).await {
+            println!("writing image...");
+            fs::write(&target_path, &image).await?;
+            results.push(target_path);
+        } else {
+            println!("download failed.")
+        }
     }
 
-    let Some(Value::String(ref image_url)) = original else {
-        Err(format!("failed to parse image_url of size {size}!"))?
-    };
-
-    fs::create_dir_all(output_dir.as_ref()).await?;
-
-    let url = url::Url::from_str(&image_url)?;
-    let basename = url.path_segments().unwrap().last().unwrap();
-    let target_path = Path::new(output_dir.as_ref()).join(basename);
-    let mut metadata_path = target_path.clone();
-    metadata_path.set_extension(".json");
-
-    println!("writing metadata...");
-    fs::write(&metadata_path, result.to_string()).await?;
-
-    if target_path.exists() {
-        println!("skipping existing image.");
-        return Ok(target_path);
-    }
-    println!("downloading {image_url}...",);
-
-    let image = download_retry(&url).await?;
-
-    println!("writing image...");
-    fs::write(&target_path, &image).await?;
-
-    Ok(target_path)
+    Ok(results)
 }
 
-pub async fn download_retry(url: &Url) -> Result<bytes::Bytes> {
+pub async fn download_retry(url: &Url, max_retry: usize) -> Result<bytes::Bytes> {
     let mut image = Err("download failed. exceeding retry limit");
 
-    for _ in 0..5 {
+    for _ in 0..max_retry {
         let result = get(url.as_str()).await;
         if let Ok(resp) = result {
             let bytes = resp.bytes().await?;
