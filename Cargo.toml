@@ -12,5 +12,12 @@ repository = "https://github.com/poly000/lolicon"
 [dependencies]
 lolicon_api = "1.6.0"
 serde_json = "1.0.128"
-reqwest = { version = "0.12.7", features = ["blocking"] }
+reqwest = { version = "0.12.7" }
 url = "2.5.2"
+tokio = { version = "1.40.0", features = [
+    "macros",
+    "net",
+    "rt-multi-thread",
+    "time",
+    "fs",
+] }

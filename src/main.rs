@@ -1,16 +1,16 @@
-use std::fs;
 use std::path::Path;
 use std::str::FromStr;
-use std::thread::sleep;
 use std::time::Duration;
 
-use reqwest::blocking::get;
+use reqwest::get;
 use serde_json::Value;
 
 use lolicon_api::Category;
 use lolicon_api::Request;
+use tokio::fs;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let req = Request::default()
         .num(1)?
         .exclude_ai(true)
@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let url = String::from(req);
     println!("quering api: {url}");
 
-    let raw_result = get(url)?.text()?;
+    let raw_result = get(url).await?.text().await?;
 
     let result: Value = serde_json::from_str(&raw_result)?;
 
@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(Value::String(ref image_url)) = original {
-        fs::create_dir_all("images")?;
+        fs::create_dir_all("images").await?;
 
         let url = url::Url::from_str(&image_url)?;
         let basename = url.path_segments().unwrap().last().unwrap();
@@ -48,22 +48,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("downloading {image_url}...",);
 
         let mut image = Err("download failed. exceeding retry limit");
-        for _ in 0..10 {
-            let result = get(url.as_str()).and_then(|result| result.bytes());
-            if let Ok(bytes) = result {
+
+        for _ in 0..5 {
+            let result = get(url.as_str()).await;
+            if let Ok(resp) = result {
+                let bytes = resp.bytes().await?;
                 if bytes.is_ascii() {
                     Err("Image not found! may removed by its author")?
                 }
                 image = Ok(bytes);
+                break;
             }
-            sleep(Duration::from_millis(500));
+
+            tokio::time::sleep(Duration::from_millis(500)).await;
         }
         let image = image?;
 
         println!("writing image...");
-        fs::write(&target_path, &image)?;
+        fs::write(&target_path, &image).await?;
         println!("writing metadata...");
-        fs::write(&metadata_path, result.to_string())?;
+        fs::write(&metadata_path, result.to_string()).await?;
     }
 
     Ok(())
