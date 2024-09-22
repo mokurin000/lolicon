@@ -11,13 +11,13 @@ use url::Url;
 
 use crate::Result;
 
+/// returns path to the downloaded image
 pub async fn download_image_data(
     data: &SetuData,
     output_dir: &Path,
     size: lolicon_api::ImageSize,
     max_retry: usize,
-    results: &mut Vec<PathBuf>,
-) -> Result<()> {
+) -> Result<PathBuf> {
     let pid = data.pid;
     eprintln!("pid: {pid}");
 
@@ -44,42 +44,48 @@ pub async fn download_image_data(
 
     if target_path.exists() {
         println!("skipping existing image.");
-        results.push(target_path);
-        return Ok(());
+        return Ok(target_path);
     }
     eprintln!("downloading {image_url}...",);
 
-    let image = download_retry(&url, max_retry).await?;
+    let image = download_retry(&url, max_retry, 500).await?;
     eprintln!("writing image...");
     fs::write(&target_path, &image).await?;
-    results.push(target_path);
-
-    Ok(())
+    Ok(target_path)
 }
 
+/// download each image in data from `setu`
 pub async fn download_images(
-    result: Setu,
+    setu: Setu,
     output_dir: impl AsRef<Path>,
     size: lolicon_api::ImageSize,
     max_retry: usize,
 ) -> Result<Vec<PathBuf>> {
     let mut results = Vec::new();
 
-    for data in &result.data {
-        if let Err(e) =
-            download_image_data(data, output_dir.as_ref(), size, max_retry, &mut results).await
-        {
-            eprintln!("download failed: {e}");
+    for data in &setu.data {
+        match download_image_data(data, output_dir.as_ref(), size, max_retry).await {
+            Ok(path) => results.push(path),
+            Err(e) => {
+                eprintln!("download failed: {e}");
+            }
         }
     }
 
     Ok(results)
 }
 
-pub async fn download_retry(url: &Url, max_retry: usize) -> Result<bytes::Bytes> {
+/// download an image to bytes, return error on 404 page
+///
+/// if `max_retry` was set to zero, it will never download.
+pub async fn download_retry(
+    url: &Url,
+    max_retry: usize,
+    initial_wait_ms: u64,
+) -> Result<bytes::Bytes> {
     let mut image = Err("exceeding retry limit");
 
-    let mut wait_time_ms = 500;
+    let mut wait_time_ms = initial_wait_ms;
     for _ in 0..max_retry {
         let result = get(url.as_str()).await;
         if let Ok(resp) = result {
