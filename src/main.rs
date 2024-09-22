@@ -1,5 +1,4 @@
 use std::fs;
-use std::io::Write;
 use std::path::Path;
 use std::str::FromStr;
 use std::thread::sleep;
@@ -38,15 +37,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let url = url::Url::from_str(&image_url)?;
         let basename = url.path_segments().unwrap().last().unwrap();
         let target_path = Path::new("images").join(basename);
+        let mut metadata_path = target_path.clone();
+        metadata_path.set_extension(".json");
 
         if target_path.exists() {
             println!("skipping existing image.");
             return Ok(());
         }
-        println!(
-            "downloading {image_url} to {}...",
-            target_path.to_string_lossy()
-        );
+        println!("downloading {image_url}...",);
 
         let mut image = Err("download failed. exceeding retry limit");
         for _ in 0..10 {
@@ -61,13 +59,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         let image = image?;
 
-        fs::OpenOptions::new()
-            .write(true)
-            .read(false)
-            .append(false)
-            .create(true)
-            .open(target_path)?
-            .write(&image)?;
+        println!("writing image...");
+        fs::write(&target_path, &image)?;
+        println!("writing metadata...");
+        fs::write(&metadata_path, result.to_string())?;
     }
 
     Ok(())
