@@ -451,7 +451,8 @@ dependencies = [
 [[package]]
 name = "lolicon_api"
 version = "1.6.4"
-source = "git+https://github.com/mokurin000/lolicon_api.git#97dab9bce7ea7921c6b64f8eab84fb9643d0872b"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2beb18bbc8bfab087da5752e40ba3049d5f63c78b7bab412d39270f1464064f"
 dependencies = [
  "regex",
  "serde",
