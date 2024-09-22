@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use config::Config;
 use reqwest::get;
 
@@ -9,7 +7,6 @@ use lolicon_api::Setu;
 use lolicon::fetch;
 use lolicon::Result;
 use tokio::fs;
-use tokio::time;
 
 mod config;
 
