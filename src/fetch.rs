@@ -105,7 +105,8 @@ pub async fn download_images(
                     }
 
                     if let Some(bytes) = d.raw_image {
-                        let _ = std::fs::write(target_path, bytes);
+                        let _ = std::fs::write(&target_path, bytes);
+                        eprintln!("downloaded {}", target_path.to_string_lossy());
                     }
                 });
             }
