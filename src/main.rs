@@ -1,13 +1,12 @@
-use config::Config;
-use reqwest::get;
-
 use lolicon_api::Setu;
+use reqwest::Client;
+use tokio::fs;
 
 use lolicon::fetch;
 use lolicon::Result;
-use tokio::fs;
 
 mod config;
+use config::Config;
 
 const CONFIG_FILE: &str = "config.toml";
 
@@ -27,7 +26,8 @@ async fn main() -> Result<()> {
     let url = String::from(req);
     eprintln!("quering api: {url}");
 
-    let raw_result = get(url).await?.text().await?;
+    let client = Client::new();
+    let raw_result = client.get(url).send().await?.text().await?;
     let result: Setu = serde_json::from_str(&raw_result)?;
 
     if !result.error.is_empty() {
@@ -41,6 +41,7 @@ async fn main() -> Result<()> {
         config.target_size,
         config.max_retry,
         config.save_metadata,
+        &client,
     )
     .await?;
 

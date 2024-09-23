@@ -25,7 +25,7 @@ pub async fn download_image_data(
     output_dir: &Path,
     size: lolicon_api::ImageSize,
     max_retry: usize,
-    client: Client,
+    client: &Client,
 ) -> Result<Downloaded> {
     let pid = data.pid;
     eprintln!("pid: {pid}");
@@ -71,18 +71,18 @@ pub async fn download_images(
     size: lolicon_api::ImageSize,
     max_retry: usize,
     save_metadata: bool,
+    client: &Client,
 ) -> Result<Vec<PathBuf>> {
     let mut results = Vec::new();
 
     let mut tasks = JoinSet::new();
     let mut write_tasks = JoinSet::new();
 
-    let client = Client::new();
     for data in setu.data {
         let client = client.clone();
         let output_dir = output_dir.as_ref().to_path_buf();
         tasks.spawn(async move {
-            download_image_data(data, output_dir.as_ref(), size, max_retry, client).await
+            download_image_data(data, output_dir.as_ref(), size, max_retry, &client).await
         });
     }
 
@@ -127,7 +127,7 @@ pub async fn download_retry(
     url: &Url,
     max_retry: usize,
     initial_wait_ms: u64,
-    client: Client,
+    client: &Client,
 ) -> Result<Bytes> {
     let mut image = Err("exceeding retry limit");
 
