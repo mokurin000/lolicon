@@ -10,8 +10,10 @@ def read_file(path: str):
 
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage:", sys.argv[0], "<dir> <tag_group1>..")
+    if len(sys.argv) < 2 or sys.argv[1] in ["-h", "--help"]:
+        print("Usage:")
+        print(sys.argv[0], "<dir> <tag_group1>..")
+        print(sys.argv[0], "<dir>")
         exit(1)
 
     directory = sys.argv[1]
@@ -21,6 +23,11 @@ def main():
     metadata_list = (
         os.path.join(directory, file) for file in files if file.endswith(".json")
     )
+
+    if not tag_groups:
+        print(f"metainfo count: {sum(map(lambda _: 1, metadata_list))}")
+        return
+
     print("reading metadata...")
     metadata = map(read_file, metadata_list)
 
