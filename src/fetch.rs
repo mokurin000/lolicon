@@ -47,7 +47,6 @@ pub async fn download_image_data(
     let target_path = output_dir.join(basename);
 
     if target_path.exists() {
-        eprintln!("skipping existing image...");
         return Ok(Downloaded {
             data,
             path: target_path,
