@@ -23,6 +23,9 @@ def main():
     )
     print("reading metadata...")
     metadata = map(read_file, metadata_list)
+
+    pids = set()
+
     for meta in metadata:
         for tag_group in tag_groups:
             if not any(
@@ -33,13 +36,16 @@ def main():
             ):
                 break
         else:
-            print(
-                *(
-                    os.path.realpath(os.path.join(directory, file))
-                    for file in files
-                    if file.startswith(str(meta["pid"])) and not file.endswith(".json")
-                )
-            )
+            pids.add(meta["pid"])
+
+    print(
+        "\n".join(
+            os.path.realpath(os.path.join(directory, file))
+            for pid in sorted(pids)
+            for file in files
+            if file.startswith(str(pid)) and not file.endswith(".json")
+        )
+    )
 
 
 if __name__ == "__main__":
