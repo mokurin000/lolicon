@@ -6,7 +6,7 @@ use std::{
 
 use bytes::Bytes;
 use lolicon_api::{Setu, SetuData};
-use reqwest::get;
+use reqwest::Client;
 use tokio::{fs, task::JoinSet};
 use url::Url;
 
@@ -25,6 +25,7 @@ pub async fn download_image_data(
     output_dir: &Path,
     size: lolicon_api::ImageSize,
     max_retry: usize,
+    client: Client,
 ) -> Result<Downloaded> {
     let pid = data.pid;
     eprintln!("pid: {pid}");
@@ -55,7 +56,7 @@ pub async fn download_image_data(
     }
     eprintln!("downloading {image_url}...",);
 
-    let image = download_retry(&url, max_retry, 500).await?;
+    let image = download_retry(&url, max_retry, 500, client).await?;
     Ok(Downloaded {
         data,
         path: target_path,
@@ -76,10 +77,12 @@ pub async fn download_images(
     let mut tasks = JoinSet::new();
     let mut write_tasks = JoinSet::new();
 
+    let client = Client::new();
     for data in setu.data {
+        let client = client.clone();
         let output_dir = output_dir.as_ref().to_path_buf();
         tasks.spawn(async move {
-            download_image_data(data, output_dir.as_ref(), size, max_retry).await
+            download_image_data(data, output_dir.as_ref(), size, max_retry, client).await
         });
     }
 
@@ -120,12 +123,17 @@ pub async fn download_images(
 /// download an image to bytes, return error on 404 page
 ///
 /// if `max_retry` was set to zero, it will never download.
-pub async fn download_retry(url: &Url, max_retry: usize, initial_wait_ms: u64) -> Result<Bytes> {
+pub async fn download_retry(
+    url: &Url,
+    max_retry: usize,
+    initial_wait_ms: u64,
+    client: Client,
+) -> Result<Bytes> {
     let mut image = Err("exceeding retry limit");
 
     let mut wait_time_ms = initial_wait_ms;
     for _ in 0..max_retry {
-        let result = get(url.as_str()).await;
+        let result = client.get(url.as_str()).send().await;
         if let Ok(resp) = result {
             let bytes = resp.bytes().await?;
             if bytes.is_ascii() {
