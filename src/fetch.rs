@@ -4,6 +4,7 @@ use std::{
     time::Duration,
 };
 
+use bytes::Bytes;
 use lolicon_api::{Setu, SetuData};
 use reqwest::get;
 use tokio::{fs, task::JoinSet};
@@ -11,14 +12,20 @@ use url::Url;
 
 use crate::Result;
 
+#[derive(Debug, Clone, Default)]
+pub struct Downloaded {
+    pub path: PathBuf,
+    pub raw_image: Option<Bytes>,
+    pub data: SetuData,
+}
+
 /// returns path to the downloaded image
 pub async fn download_image_data(
-    data: &SetuData,
+    data: SetuData,
     output_dir: &Path,
     size: lolicon_api::ImageSize,
     max_retry: usize,
-    save_metadata: bool,
-) -> Result<PathBuf> {
+) -> Result<Downloaded> {
     let pid = data.pid;
     eprintln!("pid: {pid}");
 
@@ -38,23 +45,22 @@ pub async fn download_image_data(
     let basename = url.path_segments().unwrap().last().unwrap();
     let target_path = output_dir.join(basename);
 
-    if save_metadata {
-        let mut metadata_path = target_path.clone();
-        metadata_path.set_extension("json");
-        eprintln!("writing metadata...");
-        fs::write(&metadata_path, serde_json::to_string(&data)?).await?;
-    }
-
     if target_path.exists() {
-        println!("skipping existing image.");
-        return Ok(target_path);
+        eprintln!("skipping existing image...");
+        return Ok(Downloaded {
+            data,
+            path: target_path,
+            ..Default::default()
+        });
     }
     eprintln!("downloading {image_url}...",);
 
     let image = download_retry(&url, max_retry, 500).await?;
-    eprintln!("writing image...");
-    fs::write(&target_path, &image).await?;
-    Ok(target_path)
+    Ok(Downloaded {
+        data,
+        path: target_path,
+        raw_image: Some(image),
+    })
 }
 
 /// download each image in data from `setu`
@@ -68,11 +74,12 @@ pub async fn download_images(
     let mut results = Vec::new();
 
     let mut tasks = JoinSet::new();
-    for data in &setu.data {
-        let data = data.clone();
+    let mut write_tasks = JoinSet::new();
+
+    for data in setu.data {
         let output_dir = output_dir.as_ref().to_path_buf();
         tasks.spawn(async move {
-            download_image_data(&data, output_dir.as_ref(), size, max_retry, save_metadata).await
+            download_image_data(data, output_dir.as_ref(), size, max_retry).await
         });
     }
 
@@ -82,12 +89,30 @@ pub async fn download_images(
         };
 
         match result {
-            Ok(path) => results.push(path),
+            Ok(d) => {
+                results.push(d.path.clone());
+                write_tasks.spawn_blocking(move || {
+                    let target_path = d.path;
+
+                    if save_metadata {
+                        let mut metadata_path = target_path.clone();
+                        metadata_path.set_extension("json");
+
+                        let _ =
+                            std::fs::write(metadata_path, serde_json::to_string(&d.data).unwrap());
+                    }
+
+                    if let Some(bytes) = d.raw_image {
+                        let _ = std::fs::write(target_path, bytes);
+                    }
+                });
+            }
             Err(e) => {
                 eprintln!("download failed: {e}");
             }
         }
     }
+    let _ = write_tasks.join_all();
 
     Ok(results)
 }
@@ -95,11 +120,7 @@ pub async fn download_images(
 /// download an image to bytes, return error on 404 page
 ///
 /// if `max_retry` was set to zero, it will never download.
-pub async fn download_retry(
-    url: &Url,
-    max_retry: usize,
-    initial_wait_ms: u64,
-) -> Result<bytes::Bytes> {
+pub async fn download_retry(url: &Url, max_retry: usize, initial_wait_ms: u64) -> Result<Bytes> {
     let mut image = Err("exceeding retry limit");
 
     let mut wait_time_ms = initial_wait_ms;
