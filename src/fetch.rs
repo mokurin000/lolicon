@@ -133,7 +133,11 @@ pub async fn download_retry(
 
     let mut wait_time_ms = initial_wait_ms;
     for _ in 0..max_retry {
-        let result = client.get(url.as_str()).send().await;
+        let result = client
+            .get(url.as_str())
+            .header("Referer", "https://www.pixiv.net/")
+            .send()
+            .await;
         if let Ok(resp) = result {
             let bytes = resp.bytes().await?;
             if bytes.is_ascii() {
