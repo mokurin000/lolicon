@@ -8,6 +8,7 @@ use bytes::Bytes;
 use lolicon_api::{ImageSize, Setu, SetuData};
 use reqwest::Client;
 use tokio::{fs, task::JoinSet};
+use tracing::{error, info};
 use url::Url;
 
 use crate::error::LoliconError;
@@ -62,7 +63,7 @@ pub async fn download_image_data(
             ..Default::default()
         });
     }
-    eprintln!("downloading {image_url}...",);
+    info!("downloading {image_url}...",);
 
     let url = Url::from_str(image_url)?;
     let image = download_retry(&url, max_retry, 500, client, pid as _).await?;
@@ -117,12 +118,12 @@ pub async fn download_images(
 
                     if let Some(bytes) = d.raw_image {
                         let _ = std::fs::write(&target_path, bytes);
-                        eprintln!("saved {}", target_path.to_string_lossy());
+                        info!("saved {}", target_path.to_string_lossy());
                     }
                 });
             }
             Err(e) => {
-                eprintln!("download failed: {e}");
+                error!("download failed: {e}");
                 results.push(Err(e));
             }
         }
@@ -159,7 +160,7 @@ pub async fn download_retry(
             break;
         }
 
-        eprintln!("download failed, will retry after {wait_time_ms}ms...");
+        info!("download {pid} failed, will retry after {wait_time_ms}ms...");
         tokio::time::sleep(Duration::from_millis(wait_time_ms)).await;
         wait_time_ms *= 2;
     }

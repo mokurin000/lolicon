@@ -2,11 +2,14 @@ use std::sync::Arc;
 use std::sync::LazyLock;
 use std::sync::RwLock;
 
-use lolicon::error::LoliconError;
 use lolicon_api::Setu;
 use reqwest::Client;
 use tokio::fs;
+use tracing::{error, info};
+use tracing_subscriber::EnvFilter;
+use tracing_subscriber::FmtSubscriber;
 
+use lolicon::error::LoliconError;
 use lolicon::fetch;
 use lolicon::AnyResult;
 
@@ -29,6 +32,11 @@ static STORAGE: LazyLock<Arc<RwLock<Storage>>> = LazyLock::new(|| {
 
 #[tokio::main]
 async fn main() -> AnyResult<()> {
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(EnvFilter::from_default_env())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
+
     let config;
 
     if !fs::try_exists(CONFIG_FILE).await? {
@@ -41,19 +49,19 @@ async fn main() -> AnyResult<()> {
     let req = config.request;
 
     let url = String::from(req);
-    eprintln!("quering api: {url}");
+    info!("quering api: {url}");
 
     let client = Client::new();
     let raw_result = client.get(url).send().await?.text().await?;
     let result: Setu = serde_json::from_str(&raw_result)?;
 
     if !result.error.is_empty() {
-        eprintln!("错误：{}", result.error);
+        error!("请求失败：{}", result.error);
         std::process::exit(1);
     }
 
     if config.save_metadata {
-        eprintln!("saving metadata...");
+        info!("saving metadata...");
         for data in &result.data {
             let image_url = fetch::get_url_by_size(data, config.target_size)?;
             let mut metadata_path = fetch::get_target_path(&config.output_dir, image_url)?;
@@ -64,7 +72,7 @@ async fn main() -> AnyResult<()> {
     }
 
     if !config.save_images {
-        eprintln!("Skipping download images!");
+        info!("skip downloading images...");
         return Ok(());
     }
 
