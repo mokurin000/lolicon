@@ -50,8 +50,6 @@ pub async fn download_image_data(
     pid_skip: Option<impl Fn(u64) -> bool>,
 ) -> Result<Downloaded> {
     let pid = data.pid;
-    eprintln!("pid: {pid}");
-
     let image_url = get_url_by_size(&data, size)?;
 
     fs::create_dir_all(output_dir).await?;
