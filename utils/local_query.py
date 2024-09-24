@@ -45,14 +45,20 @@ def main():
         else:
             pids.add(meta["pid"])
 
-    print(
-        "\n".join(
+    image_paths = []
+
+    for pid in sorted(pids):
+        related_paths = list(
             os.path.realpath(os.path.join(directory, file))
-            for pid in sorted(pids)
             for file in files
             if file.startswith(str(pid)) and not file.endswith(".json")
         )
-    )
+        if related_paths:
+            image_paths.extend(related_paths)
+        else:
+            print(f"WARN: lost image of pid {pid}")
+
+    print(*image_paths, sep="\n")
 
 
 if __name__ == "__main__":
