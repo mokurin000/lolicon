@@ -28,7 +28,7 @@ pub fn get_target_path(output_dir: impl AsRef<Path>, url: impl AsRef<str>) -> Re
     Ok(target_path)
 }
 
-pub fn get_url_by_size(data: &SetuData, size: ImageSize) -> Result<&str>{
+pub fn get_url_by_size(data: &SetuData, size: ImageSize) -> Result<&str> {
     match size {
         lolicon_api::ImageSize::Original => &data.urls.original,
         lolicon_api::ImageSize::Regular => &data.urls.regular,
@@ -82,7 +82,6 @@ pub async fn download_images(
     output_dir: impl AsRef<Path>,
     size: lolicon_api::ImageSize,
     max_retry: usize,
-    save_metadata: bool,
     client: &Client,
     pid_skip: Option<&'static (impl Fn(u64) -> bool + Send + Sync)>,
 ) -> Vec<Result<PathBuf>> {
@@ -118,19 +117,9 @@ pub async fn download_images(
                 write_tasks.spawn_blocking(move || {
                     let target_path = d.path;
 
-                    if save_metadata {
-                        let mut metadata_path = target_path.clone();
-                        metadata_path.set_extension("json");
-
-                        let _ = std::fs::write(
-                            metadata_path,
-                            serde_json::to_string_pretty(&d.data).unwrap(),
-                        );
-                    }
-
                     if let Some(bytes) = d.raw_image {
                         let _ = std::fs::write(&target_path, bytes);
-                        eprintln!("downloaded {}", target_path.to_string_lossy());
+                        eprintln!("saved {}", target_path.to_string_lossy());
                     }
                 });
             }

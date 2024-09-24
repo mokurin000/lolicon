@@ -52,12 +52,22 @@ async fn main() -> AnyResult<()> {
         std::process::exit(1);
     }
 
+    if config.save_metadata {
+        eprintln!("saving metadata...");
+        for data in &result.data {
+            let image_url = fetch::get_url_by_size(data, config.target_size)?;
+            let mut metadata_path = fetch::get_target_path(&config.output_dir, image_url)?;
+            metadata_path.set_extension("json");
+
+            fs::write(metadata_path, serde_json::to_string_pretty(data)?).await?;
+        }
+    }
+
     let results = fetch::download_images(
         result.clone(),
         &config.output_dir,
         config.target_size,
         config.max_retry,
-        config.save_metadata,
         &client,
         Some(&|pid| {
             if let Ok(guard) = STORAGE.read() {
@@ -75,16 +85,6 @@ async fn main() -> AnyResult<()> {
             let LoliconError::NotFound(pid) = error else {
                 continue;
             };
-            for data in &result.data {
-                if data.pid as u64 != pid {
-                    continue;
-                }
-                let image_url = fetch::get_url_by_size(data, config.target_size)?;
-                let mut metadata_path = fetch::get_target_path(&config.output_dir, image_url)?;
-                metadata_path.set_extension("json");
-
-                fs::write(metadata_path, serde_json::to_string_pretty(data)?).await?;
-            }
             guard.store(pid);
         }
         guard.write_file(STORAGE_FILE)?;
