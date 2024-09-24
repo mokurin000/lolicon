@@ -1,7 +1,6 @@
-use strum::EnumIs;
 use thiserror::Error;
 
-#[derive(Debug, Error, EnumIs)]
+#[derive(Debug, Error)]
 pub enum LoliconError {
     #[error("404 not found {0}")]
     NotFound(u64),
@@ -15,6 +14,4 @@ pub enum LoliconError {
     Io(#[from] std::io::Error),
     #[error("{0}")]
     Url(#[from] url::ParseError),
-    #[error("Invalid JSON")]
-    ParseError(#[from] serde_json::Error),
 }
