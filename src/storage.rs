@@ -34,7 +34,7 @@ impl Storage {
     }
 
     pub fn write_file(&self, path: impl AsRef<Path>) -> Result<()> {
-        let json = serde_json::to_string(&self)?;
+        let json = serde_json::to_string_pretty(&self)?;
         fs::write(path, &json)?;
         Ok(())
     }
