@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use lolicon::Result;
 
 #[derive(Deserialize, Serialize)]
+#[serde(transparent)]
 pub struct Storage {
     inner: FxHashSet<u64>,
 }
