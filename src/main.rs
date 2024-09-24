@@ -63,6 +63,11 @@ async fn main() -> AnyResult<()> {
         }
     }
 
+    if !config.save_images {
+        eprintln!("Skipping download images!");
+        return Ok(());
+    }
+
     let results = fetch::download_images(
         result.clone(),
         &config.output_dir,

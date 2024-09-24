@@ -7,11 +7,12 @@ use lolicon_api::{strum::IntoEnumIterator, Category, ImageSize, Request};
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Config {
-    pub request: Request,
-    pub max_retry: usize,
-    pub save_metadata: bool,
     pub target_size: ImageSize,
     pub output_dir: PathBuf,
+    pub save_metadata: bool,
+    pub save_images: bool,
+    pub max_retry: usize,
+    pub request: Request,
 }
 
 impl Default for Config {
@@ -31,6 +32,7 @@ impl Default for Config {
             save_metadata: true,
             target_size: ImageSize::Original,
             output_dir: PathBuf::from("images"),
+            save_images: true,
         }
     }
 }
