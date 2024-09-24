@@ -35,15 +35,20 @@ async fn main() -> AnyResult<()> {
         std::process::exit(1);
     }
 
-    fetch::download_images(
+    let results = fetch::download_images(
         result,
         config.output_dir,
         config.target_size,
         config.max_retry,
         config.save_metadata,
         &client,
+        Option::<&'static fn(u64) -> bool>::None,
     )
-    .await?;
+    .await;
+
+    for error in results.into_iter().filter_map(Result::err) {
+        // TODO: remember 404 pid's
+    }
 
     Ok(())
 }

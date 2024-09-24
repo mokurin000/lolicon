@@ -27,6 +27,7 @@ pub async fn download_image_data(
     size: lolicon_api::ImageSize,
     max_retry: usize,
     client: &Client,
+    pid_skip: Option<impl Fn(u64) -> bool>,
 ) -> Result<Downloaded> {
     let pid = data.pid;
     eprintln!("pid: {pid}");
@@ -47,7 +48,7 @@ pub async fn download_image_data(
     let basename = url.path_segments().unwrap().last().unwrap();
     let target_path = output_dir.join(basename);
 
-    if target_path.exists() {
+    if target_path.exists() || pid_skip.is_some_and(|call| call(pid as u64)) {
         return Ok(Downloaded {
             data,
             path: target_path,
@@ -80,7 +81,8 @@ pub async fn download_images(
     max_retry: usize,
     save_metadata: bool,
     client: &Client,
-) -> Result<Vec<PathBuf>> {
+    pid_skip: Option<&'static (impl Fn(u64) -> bool + Send + Sync)>,
+) -> Vec<Result<PathBuf>> {
     let mut results = Vec::new();
 
     let mut tasks = JoinSet::new();
@@ -90,7 +92,15 @@ pub async fn download_images(
         let client = client.clone();
         let output_dir = output_dir.as_ref().to_path_buf();
         tasks.spawn(async move {
-            download_image_data(data, output_dir.as_ref(), size, max_retry, &client).await
+            download_image_data(
+                data,
+                output_dir.as_ref(),
+                size,
+                max_retry,
+                &client,
+                pid_skip,
+            )
+            .await
         });
     }
 
@@ -101,7 +111,7 @@ pub async fn download_images(
 
         match result {
             Ok(d) => {
-                results.push(d.path.clone());
+                results.push(Ok(d.path.clone()));
                 write_tasks.spawn_blocking(move || {
                     let target_path = d.path;
 
@@ -121,12 +131,12 @@ pub async fn download_images(
             }
             Err(e) => {
                 eprintln!("download failed: {e}");
+                results.push(Err(e));
             }
         }
     }
     let _ = write_tasks.join_all();
-
-    Ok(results)
+    results
 }
 
 /// download an image to bytes, return error on 404 page
