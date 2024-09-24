@@ -128,7 +128,7 @@ pub async fn download_images(
             }
         }
     }
-    let _ = write_tasks.join_all();
+    let _ = write_tasks.join_all().await;
     results
 }
 
