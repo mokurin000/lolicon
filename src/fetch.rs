@@ -10,6 +10,7 @@ use reqwest::Client;
 use tokio::{fs, task::JoinSet};
 use url::Url;
 
+use crate::error::LoliconError;
 use crate::Result;
 
 #[derive(Debug, Clone, Default)]
@@ -38,7 +39,7 @@ pub async fn download_image_data(
         lolicon_api::ImageSize::Mini => &data.urls.mini,
     }
     .as_deref()
-    .ok_or(format!("missing size {size}!"))?;
+    .ok_or(LoliconError::SizeNotFound)?;
 
     fs::create_dir_all(output_dir).await?;
 
@@ -55,7 +56,15 @@ pub async fn download_image_data(
     }
     eprintln!("downloading {image_url}...",);
 
-    let image = download_retry(&url, max_retry, 500, client).await?;
+    let image = match download_retry(&url, max_retry, 500, client).await {
+        Ok(b) => b,
+        e @ Err(LoliconError::NotFound) => {
+            // TODO: remember 404 pids
+            e?
+        }
+        e @ _ => e?,
+    };
+
     Ok(Downloaded {
         data,
         path: target_path,
@@ -129,7 +138,7 @@ pub async fn download_retry(
     initial_wait_ms: u64,
     client: &Client,
 ) -> Result<Bytes> {
-    let mut image = Err("exceeding retry limit");
+    let mut image = Err(LoliconError::RetryExceed);
 
     let mut wait_time_ms = initial_wait_ms;
     for _ in 0..max_retry {
@@ -137,7 +146,7 @@ pub async fn download_retry(
         if let Ok(resp) = result {
             let bytes = resp.bytes().await?;
             if bytes.is_ascii() {
-                Err("Image not found! may removed by its author")?
+                Err(LoliconError::NotFound)?
             }
             image = Ok(bytes);
             break;

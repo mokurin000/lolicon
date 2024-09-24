@@ -3,7 +3,7 @@ use reqwest::Client;
 use tokio::fs;
 
 use lolicon::fetch;
-use lolicon::Result;
+use lolicon::AnyResult;
 
 mod config;
 use config::Config;
@@ -11,7 +11,7 @@ use config::Config;
 const CONFIG_FILE: &str = "config.toml";
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> AnyResult<()> {
     let config;
 
     if !fs::try_exists(CONFIG_FILE).await? {
