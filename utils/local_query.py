@@ -65,6 +65,7 @@ def main():
             print(f"WARN: lost image of pid {pid}")
 
     print(*image_paths, sep="\n")
+    print("count:", len(image_paths))
 
 
 if __name__ == "__main__":
