@@ -25,3 +25,5 @@ tokio = { version = "1.40.0", features = [
 bytes = "1.7.2"
 toml = { version = "0.8.19" }
 thiserror = "1.0.64"
+strum = { version = "0.26.3", default-features = false, features = ["derive"] }
+rustc-hash = "2.0.0"

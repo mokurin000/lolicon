@@ -57,14 +57,7 @@ pub async fn download_image_data(
     }
     eprintln!("downloading {image_url}...",);
 
-    let image = match download_retry(&url, max_retry, 500, client).await {
-        Ok(b) => b,
-        e @ Err(LoliconError::NotFound) => {
-            // TODO: remember 404 pids
-            e?
-        }
-        e @ _ => e?,
-    };
+    let image = download_retry(&url, max_retry, 500, client, pid as _).await?;
 
     Ok(Downloaded {
         data,
@@ -147,6 +140,7 @@ pub async fn download_retry(
     max_retry: usize,
     initial_wait_ms: u64,
     client: &Client,
+    pid: u64,
 ) -> Result<Bytes> {
     let mut image = Err(LoliconError::RetryExceed);
 
@@ -156,7 +150,7 @@ pub async fn download_retry(
         if let Ok(resp) = result {
             let bytes = resp.bytes().await?;
             if bytes.is_ascii() {
-                Err(LoliconError::NotFound)?
+                Err(LoliconError::NotFound(pid))?
             }
             image = Ok(bytes);
             break;
