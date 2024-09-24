@@ -5,7 +5,7 @@ use std::{
 };
 
 use bytes::Bytes;
-use lolicon_api::{Setu, SetuData};
+use lolicon_api::{ImageSize, Setu, SetuData};
 use reqwest::Client;
 use tokio::{fs, task::JoinSet};
 use url::Url;
@@ -20,19 +20,16 @@ pub struct Downloaded {
     pub data: SetuData,
 }
 
-/// returns path to the downloaded image
-pub async fn download_image_data(
-    data: SetuData,
-    output_dir: &Path,
-    size: lolicon_api::ImageSize,
-    max_retry: usize,
-    client: &Client,
-    pid_skip: Option<impl Fn(u64) -> bool>,
-) -> Result<Downloaded> {
-    let pid = data.pid;
-    eprintln!("pid: {pid}");
+pub fn get_target_path(output_dir: impl AsRef<Path>, url: impl AsRef<str>) -> Result<PathBuf> {
+    let url = Url::from_str(url.as_ref())?;
+    let basename = url.path_segments().unwrap().last().unwrap();
+    let target_path = output_dir.as_ref().join(basename);
 
-    let image_url = match size {
+    Ok(target_path)
+}
+
+pub fn get_url_by_size(data: &SetuData, size: ImageSize) -> Result<&str>{
+    match size {
         lolicon_api::ImageSize::Original => &data.urls.original,
         lolicon_api::ImageSize::Regular => &data.urls.regular,
         lolicon_api::ImageSize::Small => &data.urls.small,
@@ -40,14 +37,26 @@ pub async fn download_image_data(
         lolicon_api::ImageSize::Mini => &data.urls.mini,
     }
     .as_deref()
-    .ok_or(LoliconError::SizeNotFound)?;
+    .ok_or(LoliconError::SizeNotFound)
+}
+
+/// returns path to the downloaded image
+pub async fn download_image_data(
+    data: SetuData,
+    output_dir: &Path,
+    size: ImageSize,
+    max_retry: usize,
+    client: &Client,
+    pid_skip: Option<impl Fn(u64) -> bool>,
+) -> Result<Downloaded> {
+    let pid = data.pid;
+    eprintln!("pid: {pid}");
+
+    let image_url = get_url_by_size(&data, size)?;
 
     fs::create_dir_all(output_dir).await?;
 
-    let url = url::Url::from_str(&image_url)?;
-    let basename = url.path_segments().unwrap().last().unwrap();
-    let target_path = output_dir.join(basename);
-
+    let target_path = get_target_path(output_dir, image_url)?;
     if target_path.exists() || pid_skip.is_some_and(|call| call(pid as u64)) {
         return Ok(Downloaded {
             data,
@@ -57,6 +66,7 @@ pub async fn download_image_data(
     }
     eprintln!("downloading {image_url}...",);
 
+    let url = Url::from_str(image_url)?;
     let image = download_retry(&url, max_retry, 500, client, pid as _).await?;
 
     Ok(Downloaded {
@@ -112,8 +122,10 @@ pub async fn download_images(
                         let mut metadata_path = target_path.clone();
                         metadata_path.set_extension("json");
 
-                        let _ =
-                            std::fs::write(metadata_path, serde_json::to_string(&d.data).unwrap());
+                        let _ = std::fs::write(
+                            metadata_path,
+                            serde_json::to_string_pretty(&d.data).unwrap(),
+                        );
                     }
 
                     if let Some(bytes) = d.raw_image {
