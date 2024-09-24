@@ -3,7 +3,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error, EnumIs)]
 pub enum LoliconError {
-    #[error("404 not found {0}")]
+    #[error("{0} 404 not found")]
     NotFound(u64),
     #[error("size not found")]
     SizeNotFound,

@@ -63,7 +63,7 @@ pub async fn download_image_data(
             ..Default::default()
         });
     }
-    info!("downloading {image_url}...",);
+    info!("url: {image_url}",);
 
     let url = Url::from_str(image_url)?;
     let image = download_retry(&url, max_retry, 500, client, pid as _).await?;
