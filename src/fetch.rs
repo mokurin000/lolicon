@@ -147,7 +147,11 @@ pub async fn download_retry(
 
     let mut wait_time_ms = initial_wait_ms;
     for _ in 0..max_retry {
-        let result = client.get(url.as_str()).send().await;
+        let result = client
+            .get(url.as_str())
+            .timeout(Duration::from_secs(10))
+            .send()
+            .await;
         if let Ok(resp) = result {
             let bytes = resp.bytes().await?;
             if bytes.is_ascii() {
