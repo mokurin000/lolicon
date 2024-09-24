@@ -1,6 +1,10 @@
 import os
 import sys
 import json
+import multiprocessing
+from concurrent.futures import ThreadPoolExecutor
+
+NUM_CPU = multiprocessing.cpu_count()
 
 
 def read_file(path: str):
@@ -29,11 +33,12 @@ def main():
         return
 
     print("reading metadata...")
-    metadata = map(read_file, metadata_list)
+    executor = ThreadPoolExecutor(max_workers=NUM_CPU)
+    metadata = executor.map(read_file, metadata_list)
 
     pids = set()
 
-    for meta in metadata:
+    def filter_pid(meta):
         for tag_group in tag_groups:
             if not any(
                 map(
@@ -45,6 +50,7 @@ def main():
         else:
             pids.add(meta["pid"])
 
+    executor.map(filter_pid, metadata)
     image_paths = []
 
     for pid in sorted(pids):
