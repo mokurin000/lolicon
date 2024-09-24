@@ -1,10 +1,15 @@
 import os
-import sys
 import json
+import argparse
+import logging
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 
 NUM_CPU = multiprocessing.cpu_count()
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 def read_file(path: str):
@@ -14,14 +19,24 @@ def read_file(path: str):
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] in ["-h", "--help"]:
-        print("Usage:")
-        print(sys.argv[0], "<dir> <tag_group1>..")
-        print(sys.argv[0], "<dir>")
-        exit(1)
+    parser = argparse.ArgumentParser(
+        description="Process metadata and images from a directory"
+    )
+    parser.add_argument(
+        "directory", type=str, help="Directory containing metadata and images"
+    )
+    parser.add_argument(
+        "tag_groups", type=str, nargs="*", help="Groups of tags to filter images"
+    )
+    parser.add_argument(
+        "--link-dir", type=str, help="Directory to create hard links to the images"
+    )
 
-    directory = sys.argv[1]
-    tag_groups = sys.argv[2:]
+    args = parser.parse_args()
+
+    directory = args.directory
+    tag_groups = args.tag_groups
+    link_dir = args.link_dir
     files = os.listdir(directory)
 
     metadata_list = (
@@ -29,10 +44,10 @@ def main():
     )
 
     if not tag_groups:
-        print(f"metainfo count: {sum(map(lambda _: 1, metadata_list))}")
+        logging.info(f"metainfo count: {sum(map(lambda _: 1, metadata_list))}")
         return
 
-    print("reading metadata...")
+    logging.info("Reading metadata...")
     executor = ThreadPoolExecutor(max_workers=NUM_CPU)
     metadata = executor.map(read_file, metadata_list)
 
@@ -50,7 +65,7 @@ def main():
         else:
             pids.add(meta["pid"])
 
-    executor.map(filter_pid, metadata)
+    list(executor.map(filter_pid, metadata))
     image_paths = []
 
     for pid in sorted(pids):
@@ -62,10 +77,20 @@ def main():
         if related_paths:
             image_paths.extend(related_paths)
         else:
-            print(f"WARN: lost image: https://www.pixiv.net/artworks/{pid}")
+            logging.warning(f"Lost image: https://www.pixiv.net/artworks/{pid}")
 
-    print(*image_paths, sep="\n")
-    print("count:", len(image_paths))
+    if link_dir:
+        if not os.path.exists(link_dir):
+            os.makedirs(link_dir)
+        for image_path in image_paths:
+            link_path = os.path.join(link_dir, os.path.basename(image_path))
+            if not os.path.exists(link_path):
+                os.link(image_path, link_path)
+        logging.info("Hard links created.")
+    else:
+        print(*image_paths, sep="\n")
+
+    logging.info(f"Count: {len(image_paths)}")
 
 
 if __name__ == "__main__":
