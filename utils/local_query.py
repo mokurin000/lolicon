@@ -62,7 +62,7 @@ def main():
         if related_paths:
             image_paths.extend(related_paths)
         else:
-            print(f"WARN: lost image of pid {pid}")
+            print(f"WARN: lost image: https://www.pixiv.net/artworks/{pid}")
 
     print(*image_paths, sep="\n")
     print("count:", len(image_paths))
