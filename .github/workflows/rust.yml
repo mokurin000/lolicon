@@ -61,7 +61,7 @@ jobs:
           then strip ${{ matrix.bin }}
           fi
           
-          tar -cvf ${{ matrix.target }}.tar LICENSE.txt ${{ matrix.bin }}
+          tar -cvzf ${{ matrix.target }}.tar.gz LICENSE ${{ matrix.bin }}
           
       - name: Declare some variables # https://stackoverflow.com/a/61699863
         id: vars
@@ -72,7 +72,7 @@ jobs:
       - name: Pre-Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.target }}.tar
+          files: ${{ matrix.target }}.tar.gz
           tag_name: r${{ steps.vars.outputs.rev_count }}
           prerelease: false
           make_latest: true
