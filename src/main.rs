@@ -60,6 +60,8 @@ async fn main() -> AnyResult<()> {
         std::process::exit(1);
     }
 
+    std::fs::create_dir_all(&config.output_dir)?;
+
     if config.save_metadata {
         info!("saving metadata...");
         for data in &result.data {
