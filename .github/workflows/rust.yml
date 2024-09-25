@@ -60,7 +60,8 @@ jobs:
         id: vars
         shell: bash
         run: |
-          echo "rev_count=$(git rev-list --count HEAD)" >> "$GITHUB_OUTPUT"
+          rev_count=$(git rev-list --count HEAD)
+          echo rev_count=${rev_count} >> $GITHUB_OUTPUT
 
       - name: Pre-Release
         uses: softprops/action-gh-release@v2
