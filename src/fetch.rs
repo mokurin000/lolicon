@@ -8,7 +8,7 @@ use bytes::Bytes;
 use lolicon_api::{ImageSize, Setu, SetuData};
 use reqwest::Client;
 use tokio::{fs, task::JoinSet};
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 use url::Url;
 
 use crate::error::LoliconError;
@@ -167,7 +167,7 @@ pub async fn download_retry(
             }
         }
 
-        info!("download {pid} failed, will retry after {wait_time_ms}ms...");
+        warn!("download {pid} failed, will retry after {wait_time_ms}ms...");
         tokio::time::sleep(Duration::from_millis(wait_time_ms)).await;
         wait_time_ms *= 2;
     }
