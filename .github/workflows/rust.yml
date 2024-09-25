@@ -46,6 +46,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: ${{ matrix.target }}-master
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+
       - name: Run code build
         run: |
           cargo build --release --target ${{ matrix.target }}
