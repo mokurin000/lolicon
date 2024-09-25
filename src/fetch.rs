@@ -48,7 +48,7 @@ pub async fn download_image_data(
     size: ImageSize,
     max_retry: usize,
     client: &Client,
-    pid_skip: Option<impl Fn(u64) -> bool>,
+    to_skip: Option<impl Fn(&SetuData) -> bool>,
 ) -> Result<Downloaded> {
     let pid = data.pid;
     let image_url = get_url_by_size(&data, size)?;
@@ -56,12 +56,12 @@ pub async fn download_image_data(
     fs::create_dir_all(output_dir).await?;
 
     let target_path = get_target_path(output_dir, image_url)?;
-    let skip_pid = pid_skip.is_some_and(|call| call(pid as u64));
-    if target_path.exists() || skip_pid {
-        if skip_pid {
+    let skip_setu = to_skip.is_some_and(|call| call(&data));
+    if target_path.exists() || skip_setu {
+        if skip_setu {
             debug!("skip {pid}: filtered");
         } else {
-            debug!("skip {pid}: {} existing", target_path.to_string_lossy());
+            debug!("skip {pid}: existing {}", target_path.to_string_lossy());
         }
         return Ok(Downloaded {
             data,
@@ -88,7 +88,7 @@ pub async fn download_images(
     size: lolicon_api::ImageSize,
     max_retry: usize,
     client: &Client,
-    pid_skip: Option<&'static (impl Fn(u64) -> bool + Send + Sync)>,
+    to_skip: Option<&'static (impl Fn(&SetuData) -> bool + Send + Sync)>,
 ) -> Vec<Result<PathBuf>> {
     let mut results = Vec::new();
 
@@ -99,15 +99,7 @@ pub async fn download_images(
         let client = client.clone();
         let output_dir = output_dir.as_ref().to_path_buf();
         tasks.spawn(async move {
-            download_image_data(
-                data,
-                output_dir.as_ref(),
-                size,
-                max_retry,
-                &client,
-                pid_skip,
-            )
-            .await
+            download_image_data(data, output_dir.as_ref(), size, max_retry, &client, to_skip).await
         });
     }
 

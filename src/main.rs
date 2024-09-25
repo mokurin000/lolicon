@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::sync::LazyLock;
 use std::sync::RwLock;
 
-use lolicon_api::Setu;
+use lolicon_api::{Setu, SetuData};
 use reqwest::Client;
 use tokio::fs;
 use tracing::{error, info};
@@ -82,7 +82,8 @@ async fn main() -> AnyResult<()> {
         config.target_size,
         config.max_retry,
         &client,
-        Some(&|pid| {
+        Some(&|data: &SetuData| {
+            let pid = data.pid as u64;
             if let Ok(guard) = STORAGE.read() {
                 guard.contains(&pid)
             } else {
