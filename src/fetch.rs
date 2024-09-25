@@ -8,7 +8,7 @@ use bytes::Bytes;
 use lolicon_api::{ImageSize, Setu, SetuData};
 use reqwest::Client;
 use tokio::{fs, task::JoinSet};
-use tracing::{error, info};
+use tracing::{debug, error, info};
 use url::Url;
 
 use crate::error::LoliconError;
@@ -56,7 +56,13 @@ pub async fn download_image_data(
     fs::create_dir_all(output_dir).await?;
 
     let target_path = get_target_path(output_dir, image_url)?;
-    if target_path.exists() || pid_skip.is_some_and(|call| call(pid as u64)) {
+    let skip_pid = pid_skip.is_some_and(|call| call(pid as u64));
+    if target_path.exists() || skip_pid {
+        if skip_pid {
+            debug!("skip {pid}: filtered");
+        } else {
+            debug!("skip {pid}: {} existing", target_path.to_string_lossy());
+        }
         return Ok(Downloaded {
             data,
             path: target_path,
