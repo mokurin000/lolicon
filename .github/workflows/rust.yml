@@ -70,8 +70,9 @@ jobs:
           echo "::set-output name=rev_count::$(git rev-list --count HEAD)"
 
       - name: Pre-Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: ${{ matrix.target }}.tar
           tag_name: r${{ steps.vars.outputs.rev_count }}
-          prerelease: true
+          prerelease: false
+          make_latest: true
