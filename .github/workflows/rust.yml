@@ -45,6 +45,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # fix revision count
 
       
       - uses: Swatinem/rust-cache@v2
@@ -66,7 +68,7 @@ jobs:
         id: vars
         shell: bash
         run: |
-          rev_count=$(git rev-list --count main)
+          rev_count=$(git rev-list --count HEAD)
           echo rev_count=${rev_count} >> $GITHUB_OUTPUT
 
       - name: Pre-Release
