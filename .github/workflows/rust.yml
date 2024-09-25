@@ -37,37 +37,30 @@ jobs:
             
     steps:
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           target: ${{ matrix.target }}
-          toolchain: stable
+          toolchain: nightly
           override: true
 
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
       - name: Run code build
-        uses: actions-rs/cargo@v1
-        with:
-          toolchain: stable
-          command: build
-          args: --release --target ${{ matrix.target }}
+        run: |
+          cargo build --release --target ${{ matrix.target }}
 
       - name: Prepare assets
         shell: bash
         run: |
           mv target/${{ matrix.target }}/release/${{ matrix.bin }} .
-          if [[ ${{ matrix.target }} != x86_64-apple-darwin ]]
-          then strip ${{ matrix.bin }}
-          fi
-          
           tar -cvzf ${{ matrix.target }}.tar.gz LICENSE ${{ matrix.bin }}
           
-      - name: Declare some variables # https://stackoverflow.com/a/61699863
+      - name: Declare some variables
         id: vars
         shell: bash
         run: |
-          echo "::set-output name=rev_count::$(git rev-list --count HEAD)"
+          echo "rev_count=$(git rev-list --count HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Pre-Release
         uses: softprops/action-gh-release@v2
