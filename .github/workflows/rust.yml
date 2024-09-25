@@ -49,8 +49,8 @@ jobs:
       
       - uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: ${{ matrix.target }}-master
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          prefix-key: ${{ matrix.target }}-main
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run code build
         run: |
@@ -66,7 +66,7 @@ jobs:
         id: vars
         shell: bash
         run: |
-          rev_count=$(git rev-list --count HEAD)
+          rev_count=$(git rev-list --count main)
           echo rev_count=${rev_count} >> $GITHUB_OUTPUT
 
       - name: Pre-Release
