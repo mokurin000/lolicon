@@ -158,12 +158,13 @@ pub async fn download_retry(
             .send()
             .await;
         if let Ok(resp) = result {
-            let bytes = resp.bytes().await?;
-            if bytes.is_ascii() {
-                Err(LoliconError::NotFound(pid))?
+            if let Ok(bytes) = resp.bytes().await {
+                if bytes.is_ascii() {
+                    Err(LoliconError::NotFound(pid))?
+                }
+                image = Ok(bytes);
+                break;
             }
-            image = Ok(bytes);
-            break;
         }
 
         info!("download {pid} failed, will retry after {wait_time_ms}ms...");
