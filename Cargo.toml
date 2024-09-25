@@ -12,7 +12,7 @@ repository = "https://github.com/mokurin000/lolicon"
 [dependencies]
 thiserror = "1.0.64"
 strum = { version = "0.26.3", default-features = false, features = ["derive"] }
-lolicon_api = { version = "1.6.5", features = ["parse-resp"] }
+lolicon_api = { version = "1.7.0", features = ["parse-resp"] }
 
 serde = "1.0"
 serde_json = "1.0.128"

@@ -1,5 +1,6 @@
 /target
 /images
+/filtered
 
 config.toml
 storage.json

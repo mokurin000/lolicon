@@ -6,6 +6,7 @@ use lolicon_api::{strum::IntoEnumIterator, Category, ImageSize, Request};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
+#[serde(rename_all = "kebab-case")]
 pub struct Config {
     pub target_size: ImageSize,
     pub output_dir: PathBuf,
