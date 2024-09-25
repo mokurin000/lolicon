@@ -51,8 +51,6 @@ def main():
     executor = ThreadPoolExecutor(max_workers=NUM_CPU)
     metadata = executor.map(read_file, metadata_list)
 
-    pids = set()
-
     def filter_pid(meta):
         for tag_group in tag_groups:
             if not any(
@@ -61,23 +59,26 @@ def main():
                     map(lambda t: t.strip(), tag_group.split("|")),
                 ),
             ):
-                break
+                return None
         else:
-            pids.add(meta["pid"])
+            return meta["pid"]
 
-    list(executor.map(filter_pid, metadata))
+    pids = set(executor.map(filter_pid, metadata))
+    pids.remove(None)
+
     image_paths = []
 
-    for pid in sorted(pids):
+    def check_path(pid):
         related_paths = list(
             os.path.realpath(os.path.join(directory, file))
             for file in files
             if file.startswith(str(pid)) and not file.endswith(".json")
         )
-        if related_paths:
-            image_paths.extend(related_paths)
-        else:
-            logging.warning(f"Lost image: https://www.pixiv.net/artworks/{pid}")
+
+        return related_paths
+
+    for pid in pids:
+        image_paths.extend(check_path(pid))
 
     if link_dir:
         if not os.path.exists(link_dir):
