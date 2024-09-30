@@ -4,4 +4,4 @@
 
 config.toml
 storage.json
-*.ps1
+/*.ps1
