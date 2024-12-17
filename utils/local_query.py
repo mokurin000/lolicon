@@ -13,8 +13,11 @@ logging.basicConfig(
 
 
 def read_file(path: str):
-    with open(path, "r", encoding="utf-8") as f:
-        c = json.load(f)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            c = json.load(f)
+    except json.decoder.JSONDecodeError:
+        return None
     return c
 
 
@@ -52,6 +55,8 @@ def main():
     metadata = executor.map(read_file, metadata_list)
 
     def filter_pid(meta):
+        if meta is None:
+            return None
         for tag_group in tag_groups:
             if not any(
                 map(
@@ -81,8 +86,7 @@ def main():
         image_paths.extend(check_path(pid))
 
     if link_dir:
-        if not os.path.exists(link_dir):
-            os.makedirs(link_dir)
+        os.makedirs(link_dir, exist_ok=True)
         for image_path in image_paths:
             link_path = os.path.join(link_dir, os.path.basename(image_path))
             if not os.path.exists(link_path):
